@@ -14,4 +14,4 @@ It is not yet finished and I will be continuing to add functionality to the proj
 
 -Send saved links to other accounts
 
-This software is not for commercial use or distribution.
+This software is not for commercial use or distribution and is currently not offering a license.
