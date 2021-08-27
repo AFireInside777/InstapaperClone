@@ -12,20 +12,26 @@ app.config["SQLALCHEMY_DATABASE URI"] = 'sqlite:///test.db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
+idcount = 0
+array = False
+
 class User(db.Model):   
     picsrc = db.Column(db.String, primary_key=True, nullable=False)
     posttitle = db.Column(db.String, primary_key=True, nullable=False)
     date = db.Column(db.String, primary_key=True, nullable=False)
     link = db.Column(db.String, primary_key=True, nullable=False)
     art_clip = db.Column(db.String, primary_key=True, nullable=False)
+    notes = db.Column(db.String, nullable=True)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
 
-    def __init__(self, thepic, thetitle, thedate, thelink, theart):
+    def __init__(self, thepic, thetitle, thedate, thelink, theart, idcount):
         self.picsrc = thepic
         self.posttitle = thetitle
         self.date = thedate
         self.link = thelink
         self.art_clip = theart
-
+        self.id = idcount
+        
 db.create_all()
 db.session.commit()
 
@@ -44,37 +50,41 @@ def dbretrieval():
             notearray.append(post.date)
             notearray.append(post.link)
             notearray.append(post.art_clip)
+            notearray.append(post.id)
+            notearray.append(post.notes)
             sendtoJS.append(notearray)
-        print(sendtoJS)
         return jsonify(sendtoJS)
     else:
-        return jsonify("Nah bruh")
+        return jsonify("There's nothing here yet, bruv.")
 
 @app.route('/processlink', methods = ['POST'])
 def dbentry():
 
+    global idcount
     passedlink = request.get_json('passedlink')
     requestedsite = requests.get(passedlink)
-    print(requestedsite)
     rsstatus = requestedsite.status_code
-    print(rsstatus)
-    sendtoJS = []
-    notearray = []
     if rsstatus == 200:
         print("Good to go, ya dig?")
         linksoup = BeautifulSoup(requestedsite.text, 'html.parser')
 
-        if bool(linksoup.find_all('img')) == True: 
-            firstpic = linksoup.find_all('img')[0]
-            if bool(firstpic["src"]) == True: #Getting errors on some sites with this line
-                firstpic = firstpic["src"]
-            elif bool(firstpic["srcset"]) == True:
-                firstpic = firstpic["srcset"]
+        if bool(linksoup.find_all('img')) == True:
+            imglist = linksoup.find_all('img')
+            imgchoice = imglist[0]
+            firstpic = imgchoice["src"]                      
+        #elif bool(linksoup.find_all('img')) == True:
+            #imglist = linksoup.find_all('img') #Getting errors on some sites with this line
+            #firstpic = firstpic["src"]
+            #elif bool(firstpic["srcset"]) == True:
+                #firstpic = firstpic["srcset"]
         else:
-            firstpic = "/static/Could Not Find Pic.png"
-                    
-        title = linksoup.find_all('h1')#[0] make function for finding ('h2') as well, https://www.inc.com/geoffrey-james/the-correct-way-to-hang-toilet-paper-according-to-.html
-        titletext = title[0].getText()# Also get h1 tags buried in other divs.    
+            firstpic = "/static/Could Not Find Pic.png"     
+        if bool(linksoup.find_all('title')) == True:
+            title = linksoup.find_all('title')
+            titletext = title[0].getText()
+        else:
+            title = linksoup.find_all('h1')#[0] make function for finding ('h2') as well, https://www.inc.com/geoffrey-james/the-correct-way-to-hang-toilet-paper-according-to-.html
+            titletext = title[0].getText()# Also get h1 tags buried in other divs.    
 
         savedate = datetime.datetime.now()
         savedate2 = savedate.strftime("%x")
@@ -85,11 +95,25 @@ def dbentry():
         else:
             art2 = "We couldn't find text for these idiots."
 
-        postobject = User(firstpic, titletext, savedate2, passedlink, art2)
+        postobject = User(firstpic, titletext, savedate2, passedlink, art2, idcount)
         
         db.session.add(postobject)
         db.session.commit()
-
+        idcount += 1
         return jsonify("Done deal, chap.")
+    else:
+        return jsonify("They wouldn't allow us to take the info.")
+
+@app.route('/updatenotes', methods = ['POST'])
+def addnotes():
+
+    notearrays = request.get_json('notetransferlist[]')
+    for notearray in notearrays:
+        entrynumber = int(notearray[0])
+        print(entrynumber)
+        notechangerecord = User.query.filter_by(id=entrynumber).first()
+        notechangerecord.notes = notearray[1]
+    db.session.commit()
+    return jsonify("Notes were bloody updated, lad. Alrighty?")
 
 app.run(debug=True)
