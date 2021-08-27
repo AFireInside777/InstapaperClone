@@ -1,6 +1,35 @@
+var noteandidlist = []
+var notetransferlist = []
+var notes
+
+function collectnotes(){
+    for (notearray of noteandidlist){
+        if (notearray[1].value != false){
+            notetransferlist.push([notearray[0], notearray[1].value])
+        }
+    }
+    if (notetransferlist.length > 0){
+        $.ajax({
+            url: '/updatenotes',
+            datatype: "text",
+            data: JSON.stringify(notetransferlist),
+            type: 'POST',
+            success: function(response){
+                alert(response)
+                location.reload()
+            },
+            error: function(error){
+                console.log(error);
+            }
+        });
+    }
+    
+}
+
 function sendLink(){
     var newlink = $('#linkshit').val();
     var newlink = JSON.stringify(newlink)
+    grandpostarray = []
     $('#linkshit').val('');
     $.ajax({
         url: '/processlink',
@@ -25,16 +54,19 @@ function processlink(postarray) {
     post.style.marginBottom = "4px"
     post.style.borderStyle = "solid"
     post.style.borderColor = "blue"
-    post.id = "forerase"
+    post.style.display = "flex"
+    post.style.flexDirection = "column"
+    post.id = postarray[5]
 
     var picandinfo = document.createElement("div");
     picandinfo.style.display = "flex";
+    picandinfo.style.flexDirection = "row"
     picandinfo.style.padding = "2px"
     post.appendChild(picandinfo)
 
     var postpic = document.createElement("div");
     postpic.style.minWidth = "187px";
-    postpic.style.minHeight= "125px";
+    postpic.style.minHeight= "110px";
     postpic.style.marginRight = "1px";
     postpic.style.borderRightStyle = "solid";
     postpic.style.borderColor = "red";
@@ -42,7 +74,7 @@ function processlink(postarray) {
     var pic = document.createElement("img");
     pic.src = postarray[0]
     pic.style.maxWidth = "186px";
-    pic.style.maxHeight = "125px"
+    pic.style.maxHeight = "110px"
     postpic.appendChild(pic);
 
     picandinfo.appendChild(postpic);
@@ -56,6 +88,7 @@ function processlink(postarray) {
     posttitle.innerHTML = (postarray[1]);
     posttitle.style.height = "25%"
     posttitle.style.whiteSpace = "nowrap"
+    
     infobox.appendChild(posttitle);
 
     var postdate = document.createElement("div");
@@ -75,26 +108,31 @@ function processlink(postarray) {
     var articlepreview = document.createTextNode(postarray[4]);
     article.style.height = "25%"
     article.style.whiteSpace = "nowrap"
+    article.style.verticalAlign = "bottom"
     article.appendChild(articlepreview);
     infobox.appendChild(article);
 
-    var notes = document.createElement("TEXTAREA");
-    notes.style.width = "99%";
+    notes = document.createElement("TEXTAREA");
+    notes.style.width = "99.1%";
     notes.style.height ="70px";
     notes.style.overflow = "auto";
     notes.style.bottom = "100px"
     notes.style.borderStyle = "dotted"
+    notes.style.resize = "vertical"
+    notes.id = postarray[5]
+    notes.innerHTML = postarray[6]
     post.appendChild(notes);
+    /*Button as wide as post to expand area for notes or hide it*/
+    /*Show it at min height. If there are notes already, show div as big as paragraph*/
     /*find out how to expand texte area automatically with each new line.*/
     /*Give the TextArea an ID, and then send to a function*/
-    /*put buttons under div for hide*/
-    /*For word count thing, have an array keep all word counts, then adjust height accordingly*/
+    /*For word count thing, have an array keep all individual word counts, then adjust height accordingly*/
     /*Make an event listener for all text areas.*/
     /*For every 20 or so words, expand the textarea, or every 400 letters*/
-    /*infobox.appendChild(postauthoranddate);*/
     var bookmarklane = document.getElementById("bookmarkandlink");
     bookmarklane.appendChild(post);
-
+    
+    noteandidlist.push([notes.id, notes])
 }
 
 function MainDisplay(){
@@ -110,23 +148,31 @@ function MainDisplay(){
 
     var link = document.createElement("div")
     link.style.marginBottom = "2px";
+    link.style.border = "solid";
     link.style.display = "flex"
+    link.style.flexDirection = "column"
+    link.style.alignItems = "stretch"
 
     var linktext = document.createElement("TEXTAREA")
     linktext.style.wordWrap = "soft"
-    linktext.style.height = "18px"
     linktext.style.resize = "none"
-    linktext.style.width = "719px"
+    linktext.style.width = "99.1%"
     linktext.id = "linkshit";
     link.appendChild(linktext)
 
     var button = document.createElement("input");
-    button.style.display = "absolute";
-    button.style.height = "24px"
+    button.style.height = "100%"
     button.type = "submit";
-    button.value = "Upload"
-    button.onclick = function(){sendLink()};
+    button.value = "Scrape Link"
     link.appendChild(button)
+    button.onclick = function(){sendLink()};
+
+    var button2 = document.createElement("input");
+    button2.style.height = "24px"
+    button2.type = "submit";
+    button2.value = "Update Notes on Posts"
+    link.appendChild(button2)
+    button2.onclick = function(){collectnotes()};
 
     origindiv.appendChild(link);
     document.body.appendChild(origindiv)
