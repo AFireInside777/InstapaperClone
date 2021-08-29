@@ -52,6 +52,7 @@ def dbretrieval():
             notearray.append(post.art_clip)
             notearray.append(post.id)
             notearray.append(post.notes)
+            print(post.notes)
             sendtoJS.append(notearray)
         return jsonify(sendtoJS)
     else:
@@ -65,7 +66,6 @@ def dbentry():
     requestedsite = requests.get(passedlink)
     rsstatus = requestedsite.status_code
     if rsstatus == 200:
-        print("Good to go, ya dig?")
         linksoup = BeautifulSoup(requestedsite.text, 'html.parser')
 
         if bool(linksoup.find_all('img')) == True:
@@ -110,9 +110,11 @@ def addnotes():
     notearrays = request.get_json('notetransferlist[]')
     for notearray in notearrays:
         entrynumber = int(notearray[0])
-        print(entrynumber)
         notechangerecord = User.query.filter_by(id=entrynumber).first()
-        notechangerecord.notes = notearray[1]
+        if notearray[1] == "Nothing":
+            notechangerecord.notes = ""
+        else:
+            notechangerecord.notes = notearray[1]
     db.session.commit()
     return jsonify("Notes were bloody updated, lad. Alrighty?")
 
