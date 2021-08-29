@@ -4,7 +4,9 @@ var notes
 
 function collectnotes(){
     for (notearray of noteandidlist){
-        if (notearray[1].value != false){
+        if (notearray[1].value == false){
+            notetransferlist.push([notearray[0], "Nothing"])
+        } else {
             notetransferlist.push([notearray[0], notearray[1].value])
         }
     }
@@ -122,16 +124,11 @@ function processlink(postarray) {
     notes.id = postarray[5]
     notes.innerHTML = postarray[6]
     post.appendChild(notes);
-    /*Button as wide as post to expand area for notes or hide it*/
-    /*Show it at min height. If there are notes already, show div as big as paragraph*/
-    /*find out how to expand texte area automatically with each new line.*/
-    /*Give the TextArea an ID, and then send to a function*/
-    /*For word count thing, have an array keep all individual word counts, then adjust height accordingly*/
-    /*Make an event listener for all text areas.*/
-    /*For every 20 or so words, expand the textarea, or every 400 letters*/
     var bookmarklane = document.getElementById("bookmarkandlink");
     bookmarklane.appendChild(post);
     
+    console.log(postarray[6])
+
     noteandidlist.push([notes.id, notes])
 }
 
